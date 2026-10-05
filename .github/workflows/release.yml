@@ -54,6 +54,7 @@ jobs:
       - name: Verify release APK
         env:
           VERSION_NAME: ${{ steps.version.outputs.name }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
         run: |
           apk='app/build/outputs/apk/release/app-release.apk'
           test -f "$apk"
@@ -65,12 +66,23 @@ jobs:
           test -x "$apksigner"
           "$apksigner" verify --verbose "$apk"
           cp "$apk" "kanalik-${VERSION_NAME}.apk"
+          sha256="$(sha256sum "kanalik-${VERSION_NAME}.apk" | awk '{print $1}')"
+          cat > kanalik-update.json <<EOF
+          {
+            "versionCode": ${VERSION_CODE},
+            "versionName": "${VERSION_NAME}",
+            "apkName": "kanalik-${VERSION_NAME}.apk",
+            "sha256": "${sha256}"
+          }
+          EOF
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
         with:
           name: kanalik-${{ steps.version.outputs.name }}
-          path: kanalik-${{ steps.version.outputs.name }}.apk
+          path: |
+            kanalik-${{ steps.version.outputs.name }}.apk
+            kanalik-update.json
           if-no-files-found: error
           retention-days: 30
 
@@ -81,8 +93,9 @@ jobs:
         run: |
           tag="v${VERSION_NAME}"
           apk="kanalik-${VERSION_NAME}.apk"
+          metadata="kanalik-update.json"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$apk" --clobber
+            gh release upload "$tag" "$apk" "$metadata" --clobber
           else
-            gh release create "$tag" "$apk" --target "$GITHUB_SHA" --generate-notes --title "Kanálik ${VERSION_NAME}"
+            gh release create "$tag" "$apk" "$metadata" --target "$GITHUB_SHA" --generate-notes --title "Kanálik ${VERSION_NAME}"
           fi

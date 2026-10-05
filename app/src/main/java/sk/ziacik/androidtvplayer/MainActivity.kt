@@ -5,11 +5,18 @@ import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import sk.ziacik.androidtvplayer.archive.StvrArchiveResolver
 import sk.ziacik.androidtvplayer.channel.ArchiveProvider
@@ -39,10 +46,17 @@ import sk.ziacik.androidtvplayer.resolver.Ta3Resolver
 import sk.ziacik.androidtvplayer.ui.AndroidTvPlayerTheme
 import sk.ziacik.androidtvplayer.ui.OverlayController
 import sk.ziacik.androidtvplayer.ui.PlayerScreen
+import sk.ziacik.androidtvplayer.ui.UpdatePrompt
+import sk.ziacik.androidtvplayer.update.AppUpdateState
+import sk.ziacik.androidtvplayer.update.GithubAppUpdater
+import sk.ziacik.androidtvplayer.update.UpdateInfo
 
 class MainActivity : ComponentActivity() {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val updateState = MutableStateFlow<AppUpdateState>(AppUpdateState.Hidden)
     private lateinit var playerController: PlayerController
+    private lateinit var appUpdater: GithubAppUpdater
+    private var pendingUpdateAfterPermission: UpdateInfo? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +66,8 @@ class MainActivity : ComponentActivity() {
             View.SYSTEM_UI_FLAG_FULLSCREEN or
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+
+        appUpdater = GithubAppUpdater(this)
 
         val playerPort = Media3PlayerPort(this)
         val freeviewHttpClient = OkHttpFreeviewClient()
@@ -137,19 +153,45 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AndroidTvPlayerTheme {
-                PlayerScreen(
-                    controller = playerController,
-                    player = playerPort.player,
-                    overlayController = overlayController,
-                    epgRepository = epgRepository,
-                    archiveAvailable = { channel, program ->
-                        when (channel.archive?.provider) {
-                            ArchiveProvider.STVR -> stvrArchiveResolver.isAvailable(channel, program)
-                            null -> false
-                        }
-                    },
-                    onExit = ::finish,
-                )
+                val currentUpdateState by updateState.collectAsState()
+                Box(Modifier.fillMaxSize()) {
+                    PlayerScreen(
+                        controller = playerController,
+                        player = playerPort.player,
+                        overlayController = overlayController,
+                        epgRepository = epgRepository,
+                        archiveAvailable = { channel, program ->
+                            when (channel.archive?.provider) {
+                                ArchiveProvider.STVR -> stvrArchiveResolver.isAvailable(channel, program)
+                                null -> false
+                            }
+                        },
+                        onExit = ::finish,
+                    )
+                    UpdatePrompt(
+                        state = currentUpdateState,
+                        onUpdate = {
+                            val info = when (val state = updateState.value) {
+                                is AppUpdateState.Available -> state.info
+                                is AppUpdateState.Error -> state.info
+                                else -> null
+                            }
+                            if (info != null) requestOrInstallUpdate(info)
+                        },
+                        onLater = { updateState.value = AppUpdateState.Hidden },
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                }
+            }
+        }
+
+        if (appUpdater.shouldUseSelfUpdater()) {
+            appScope.launch {
+                runCatching { appUpdater.checkForUpdate() }
+                    .onSuccess { info ->
+                        if (info != null) updateState.value = AppUpdateState.Available(info)
+                    }
+                    .onFailure { Log.w("AndroidTvPlayer", "Update check failed", it) }
             }
         }
     }
@@ -164,10 +206,47 @@ class MainActivity : ComponentActivity() {
         super.onStop()
     }
 
+    override fun onResume() {
+        super.onResume()
+        val pending = pendingUpdateAfterPermission ?: return
+        if (appUpdater.canRequestPackageInstalls()) {
+            pendingUpdateAfterPermission = null
+            startUpdate(pending)
+        }
+    }
+
     override fun onDestroy() {
         playerController.release()
         appScope.cancel()
         super.onDestroy()
+    }
+
+    private fun requestOrInstallUpdate(info: UpdateInfo) {
+        if (!appUpdater.canRequestPackageInstalls()) {
+            pendingUpdateAfterPermission = info
+            appUpdater.requestInstallPermission(this)
+            return
+        }
+        startUpdate(info)
+    }
+
+    private fun startUpdate(info: UpdateInfo) {
+        if (updateState.value is AppUpdateState.Downloading) return
+        updateState.value = AppUpdateState.Downloading(info)
+        appScope.launch {
+            runCatching { appUpdater.download(info) }
+                .onSuccess { apk ->
+                    updateState.value = AppUpdateState.Hidden
+                    appUpdater.install(this@MainActivity, apk)
+                }
+                .onFailure { error ->
+                    Log.w("AndroidTvPlayer", "Update download failed", error)
+                    updateState.value = AppUpdateState.Error(
+                        info = info,
+                        message = "Aktualizáciu sa nepodarilo stiahnuť alebo overiť.",
+                    )
+                }
+        }
     }
 
     private companion object {
