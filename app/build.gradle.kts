@@ -19,8 +19,8 @@ android {
         minSdk = 26
         targetSdk = 37
         // Increment both values together for a public release; changing this file publishes it. Retry after updater lint fix.
-        versionCode = 5
-        versionName = "0.1.4"
+        versionCode = 6
+        versionName = "0.1.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
