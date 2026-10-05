@@ -18,6 +18,7 @@ android {
         applicationId = "sk.ziacik.androidtvplayer"
         minSdk = 26
         targetSdk = 37
+        // Increment both values together for a public release.
         versionCode = 5
         versionName = "0.1.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
