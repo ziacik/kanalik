@@ -39,26 +39,20 @@
   <main>
     <h1>Kanálik</h1>
     <p>Android TV prehrávač</p>
-    <a id="download" class="button" href="https://github.com/ziacik/kanalik/releases/latest">Stiahnuť APK</a>
-    <div id="status">Hľadám najnovšiu verziu…</div>
+    <a id="download" class="button" href="./kanalik.apk">Stiahnuť APK</a>
+    <div id="status">Priame stiahnutie APK</div>
   </main>
   <script>
     (async () => {
-      const button = document.getElementById('download');
       const status = document.getElementById('status');
       try {
         const response = await fetch('https://api.github.com/repos/ziacik/kanalik/releases/latest', {
           headers: { 'Accept': 'application/vnd.github+json' }
         });
-        if (!response.ok) throw new Error('release lookup failed');
+        if (!response.ok) return;
         const release = await response.json();
-        const asset = release.assets.find(a => /^kanalik-.*\.apk$/i.test(a.name));
-        if (!asset) throw new Error('apk asset missing');
-        button.href = asset.browser_download_url;
-        status.textContent = release.name || release.tag_name;
-      } catch (_) {
-        status.textContent = 'Najnovší release na GitHube';
-      }
+        status.textContent = release.name || release.tag_name || 'Priame stiahnutie APK';
+      } catch (_) {}
     })();
   </script>
 </body>
