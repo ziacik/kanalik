@@ -76,8 +76,7 @@ class GithubAppUpdater(
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) error("APK download failed: HTTP ${response.code}")
-            val body = response.body ?: error("APK download returned an empty body")
-            body.byteStream().use { input ->
+            response.body.byteStream().use { input ->
                 target.outputStream().use { output ->
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                     while (true) {
@@ -152,8 +151,7 @@ class GithubAppUpdater(
             .build()
         return client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) error("Update check failed: HTTP ${response.code}")
-            val body = response.body?.string() ?: error("Update check returned an empty body")
-            JSONObject(body)
+            JSONObject(response.body.string())
         }
     }
 
