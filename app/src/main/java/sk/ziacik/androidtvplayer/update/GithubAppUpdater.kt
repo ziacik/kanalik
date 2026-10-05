@@ -159,7 +159,7 @@ class GithubAppUpdater(
 
     private companion object {
         const val LATEST_RELEASE_URL =
-            "https://api.github.com/repos/ziacik/android-tv-player/releases/latest"
+            "https://api.github.com/repos/ziacik/kanalik/releases/latest"
         const val UPDATE_METADATA_NAME = "kanalik-update.json"
         const val APK_MIME_TYPE = "application/vnd.android.package-archive"
     }
