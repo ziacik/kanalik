@@ -7,6 +7,11 @@ on:
     paths:
       - "site/**"
       - ".github/workflows/pages.yml"
+  workflow_run:
+    workflows:
+      - "Release APK"
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
@@ -20,12 +25,26 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - name: Download latest release APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/kanalik-release"
+          gh release download             --repo "$GITHUB_REPOSITORY"             --pattern 'kanalik-*.apk'             --dir "$RUNNER_TEMP/kanalik-release"
+          apk="$(find "$RUNNER_TEMP/kanalik-release" -maxdepth 1 -type f -name 'kanalik-*.apk' | head -n1)"
+          test -n "$apk"
+          cp "$apk" site/kanalik.apk
+          test -s site/kanalik.apk
+
       - uses: actions/configure-pages@v5
         with:
           enablement: true
