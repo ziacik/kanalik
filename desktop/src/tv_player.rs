@@ -210,7 +210,6 @@ fn attach_renderer(engine: &Engine, redraw_tx: mpsc::SyncSender<()>) -> Result<(
     .map_err(|err| format!("Cannot attach libmpv OpenGL renderer: {err}"))
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -230,9 +229,7 @@ mod tests {
         engine
             .set_property("http-header-fields", "")
             .expect("clear custom HTTP fields");
-        engine
-            .set_property("referrer", "")
-            .expect("clear referrer");
+        engine.set_property("referrer", "").expect("clear referrer");
         engine
             .set_property("user-agent", "mpv")
             .expect("reset user agent");
