@@ -242,7 +242,8 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
         Message::Catalog(Err(error)) => {
             ui.summary.set_text(&error);
             ui.refresh_button.set_sensitive(true);
-            ui.check_button.set_sensitive(!state.borrow().channels.is_empty());
+            ui.check_button
+                .set_sensitive(!state.borrow().channels.is_empty());
         }
         Message::Checking(id) => {
             if let Some(row) = state.borrow().rows.get(&id) {
