@@ -137,7 +137,10 @@ mod tests {
         };
         let mut command = Command::new("mpv");
         configure_mpv(&mut command, &channel);
-        let args: Vec<_> = command.get_args().map(|arg| arg.to_string_lossy().into_owned()).collect();
+        let args: Vec<_> = command
+            .get_args()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect();
         assert!(args.contains(&"--referrer=https://example.com/".to_string()));
         assert_eq!(args.last().map(String::as_str), Some(channel.url.as_str()));
     }
