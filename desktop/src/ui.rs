@@ -1,4 +1,4 @@
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::path::PathBuf;
@@ -448,13 +448,13 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
             state_mut.online = 0;
             state_mut.failed = 0;
             state_mut.timed_out = 0;
-            for channel in &state_mut.channels {
+            for channel in state_mut.channels.clone() {
                 let row = adw::ActionRow::builder()
                     .title(&channel.name)
                     .activatable(true)
                     .build();
                 ui.channel_list.append(&row);
-                let checker = make_checker_row(channel);
+                let checker = make_checker_row(&channel);
                 ui.checker_list.append(&checker.0);
                 state_mut.rows.insert(channel.id.clone(), checker.1);
             }
@@ -466,10 +466,7 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
                 state_mut.channels.len(),
                 loaded.source,
             ));
-            let selected = state_mut.active_id.as_ref()
-                .or_else(|| None)
-                .cloned()
-                .or_else(last_channel_id);
+            let selected = state_mut.active_id.clone().or_else(last_channel_id);
             let next_channel = selected
                 .as_ref()
                 .and_then(|id| state_mut.channels.iter().find(|channel| &channel.id == id))
