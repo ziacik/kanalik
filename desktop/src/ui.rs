@@ -250,12 +250,12 @@ fn build_ui(app: &adw::Application) {
     checker_content.append(&checker_summary);
     checker_window.set_child(Some(&checker_content));
     checker_window.connect_close_request(|window| {
-        window.hide();
+        window.set_visible(false);
         glib::Propagation::Stop
     });
 
     let css = gtk::CssProvider::new();
-    css.load_from_data(".video-stage { background-color: #000; }");
+    css.load_from_string(".video-stage { background-color: #000; }");
     if let Some(display) = gdk::Display::default() {
         gtk::style_context_add_provider_for_display(
             &display,
@@ -358,6 +358,7 @@ fn build_ui(app: &adw::Application) {
         let ui = ui.clone();
         let state = state.clone();
         let controller = gtk::EventControllerKey::new();
+        let keyboard_window = ui.window.clone();
         controller.connect_key_pressed(move |_, key, _, _| {
             if key == gdk::Key::F11 {
                 toggle_fullscreen(&ui);
@@ -378,7 +379,7 @@ fn build_ui(app: &adw::Application) {
             }
             glib::Propagation::Stop
         });
-        ui.window.add_controller(controller);
+        keyboard_window.add_controller(controller);
     }
 
     {
