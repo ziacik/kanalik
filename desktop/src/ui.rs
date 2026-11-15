@@ -79,10 +79,7 @@ fn build_ui(app: &adw::Application) {
         .build();
 
     let header = adw::HeaderBar::new();
-    header.set_title_widget(Some(&adw::WindowTitle::new(
-        "Kanálik",
-        "Live television",
-    )));
+    header.set_title_widget(Some(&adw::WindowTitle::new("Kanálik", "Live television")));
 
     let refresh_button = gtk::Button::from_icon_name("view-refresh-symbolic");
     refresh_button.set_tooltip_text(Some("Reload channels"));
@@ -299,19 +296,21 @@ fn build_ui(app: &adw::Application) {
     {
         let ui = ui.clone();
         let state = state.clone();
-        ui.channel_list.clone().connect_row_activated(move |_, row| {
-            let channel = {
-                let state = state.borrow();
-                state
-                    .channels
-                    .iter()
-                    .find(|channel| channel.id == row.widget_name())
-                    .cloned()
-            };
-            if let Some(channel) = channel {
-                play_channel(&ui, &state, &channel);
-            }
-        });
+        ui.channel_list
+            .clone()
+            .connect_row_activated(move |_, row| {
+                let channel = {
+                    let state = state.borrow();
+                    state
+                        .channels
+                        .iter()
+                        .find(|channel| channel.id == row.widget_name())
+                        .cloned()
+                };
+                if let Some(channel) = channel {
+                    play_channel(&ui, &state, &channel);
+                }
+            });
     }
 
     {
@@ -326,7 +325,9 @@ fn build_ui(app: &adw::Application) {
     }
     {
         let ui = ui.clone();
-        ui.pause_button.clone().connect_clicked(move |_| toggle_pause(&ui));
+        ui.pause_button
+            .clone()
+            .connect_clicked(move |_| toggle_pause(&ui));
     }
     {
         let ui = ui.clone();
@@ -335,7 +336,11 @@ fn build_ui(app: &adw::Application) {
             let channel = {
                 let state = state.borrow();
                 state.active_id.as_ref().and_then(|id| {
-                    state.channels.iter().find(|channel| &channel.id == id).cloned()
+                    state
+                        .channels
+                        .iter()
+                        .find(|channel| &channel.id == id)
+                        .cloned()
                 })
             };
             if let Some(channel) = channel {
@@ -604,7 +609,9 @@ fn play_channel(ui: &Ui, state: &Rc<RefCell<AppState>>, channel: &Channel) {
         // usable through the same mpv backend as the diagnostics tool.
         ui.video.set_file(None::<&gio::File>);
         match launch_mpv(channel) {
-            Ok(()) => ui.playback_status.set_text("Opened in mpv (custom HTTP headers)"),
+            Ok(()) => ui
+                .playback_status
+                .set_text("Opened in mpv (custom HTTP headers)"),
             Err(error) => ui.playback_status.set_text(&error),
         }
     } else {
@@ -615,7 +622,8 @@ fn play_channel(ui: &Ui, state: &Rc<RefCell<AppState>>, channel: &Channel) {
             media.play();
         }
     }
-    ui.pause_button.set_icon_name("media-playback-pause-symbolic");
+    ui.pause_button
+        .set_icon_name("media-playback-pause-symbolic");
     let index = state
         .borrow()
         .channels
@@ -649,10 +657,12 @@ fn toggle_pause(ui: &Ui) {
     if let Some(media) = ui.video.media_stream() {
         if media.is_playing() {
             media.pause();
-            ui.pause_button.set_icon_name("media-playback-start-symbolic");
+            ui.pause_button
+                .set_icon_name("media-playback-start-symbolic");
         } else {
             media.play();
-            ui.pause_button.set_icon_name("media-playback-pause-symbolic");
+            ui.pause_button
+                .set_icon_name("media-playback-pause-symbolic");
         }
     }
 }
@@ -672,7 +682,8 @@ fn toggle_fullscreen(ui: &Ui) {
 fn update_playback_status(ui: &Ui) {
     if let Some(media) = ui.video.media_stream() {
         if let Some(error) = media.error() {
-            ui.playback_status.set_text(&format!("Playback error: {error}. Try mpv."));
+            ui.playback_status
+                .set_text(&format!("Playback error: {error}. Try mpv."));
         } else if media.is_prepared() {
             if media.is_playing() {
                 ui.playback_status.set_text("Live");
@@ -697,12 +708,14 @@ fn spawn_checks(channels: Vec<Channel>, sender: mpsc::Sender<Message>) {
         for _ in 0..worker_count {
             let pending = pending.clone();
             let sender = sender.clone();
-            workers.push(thread::spawn(move || loop {
-                let next = pending.lock().ok().and_then(|mut queue| queue.pop_front());
-                let Some(channel) = next else { break };
-                let _ = sender.send(Message::Checking(channel.id.clone()));
-                let result = checker::check(&channel);
-                let _ = sender.send(Message::Checked(channel.id, result));
+            workers.push(thread::spawn(move || {
+                loop {
+                    let next = pending.lock().ok().and_then(|mut queue| queue.pop_front());
+                    let Some(channel) = next else { break };
+                    let _ = sender.send(Message::Checking(channel.id.clone()));
+                    let result = checker::check(&channel);
+                    let _ = sender.send(Message::Checked(channel.id, result));
+                }
             }));
         }
         for worker in workers {
