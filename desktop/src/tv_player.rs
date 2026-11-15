@@ -209,3 +209,32 @@ fn attach_renderer(engine: &Engine, redraw_tx: mpsc::SyncSender<()>) -> Result<(
     }
     .map_err(|err| format!("Cannot attach libmpv OpenGL renderer: {err}"))
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mpv_accepts_network_header_options_and_clearing_them() {
+        let engine = Engine::headless().build().expect("libmpv initializes");
+        engine
+            .set_property("referrer", "https://example.org/")
+            .expect("referrer option");
+        engine
+            .set_property("user-agent", "Kanálik")
+            .expect("user agent option");
+        engine
+            .set_property("http-header-fields", "X-Test: stream")
+            .expect("custom HTTP field");
+        engine
+            .set_property("http-header-fields", "")
+            .expect("clear custom HTTP fields");
+        engine
+            .set_property("referrer", "")
+            .expect("clear referrer");
+        engine
+            .set_property("user-agent", "mpv")
+            .expect("reset user agent");
+    }
+}
