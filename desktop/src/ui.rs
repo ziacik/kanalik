@@ -223,8 +223,8 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
             state.completed = 0;
             state.online = 0;
             state.failed = 0;
-            for channel in &state.channels {
-                let row = make_channel_row(channel, &ui.summary);
+            for channel in state.channels.clone() {
+                let row = make_channel_row(&channel, &ui.summary);
                 ui.list.append(&row.0);
                 state.rows.insert(channel.id.clone(), row.1);
             }
