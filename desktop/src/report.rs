@@ -63,9 +63,7 @@ pub fn to_csv(
 /// Always quote fields, including embedded commas, quotation marks and newlines.
 /// Guard against CSV formula injection when a report is opened in a spreadsheet.
 fn csv_cell(value: &str) -> String {
-    let dangerous = value
-        .trim_start()
-        .starts_with(['=', '+', '-', '@']);
+    let dangerous = value.trim_start().starts_with(['=', '+', '-', '@']);
     let safe = if dangerous {
         format!("'{value}")
     } else {
@@ -102,14 +100,19 @@ mod tests {
         )]);
         let csv = to_csv(&channels, &results, false);
         assert!(csv.starts_with("ID,Channel,URL,Status,Duration (s),Checked at,Details\r\n"));
-        assert!(csv.contains("\"a\",\"Alpha\",\"https://example.com/stream.m3u8\",\"Not checked\""));
+        assert!(
+            csv.contains("\"a\",\"Alpha\",\"https://example.com/stream.m3u8\",\"Not checked\"")
+        );
         assert!(csv.contains("\"b\",\"Beta\",\"https://example.com/stream.m3u8\",\"Unknown (timeout)\",\"12.50\",\"2026-11-15 20:58:00 +0100\",\"No frames\""));
         assert!(csv.find("\"a\"").unwrap() < csv.find("\"b\"").unwrap());
     }
 
     #[test]
     fn escapes_csv_and_neutralizes_formula_cells() {
-        let channels = vec![channel("x", "Name, \"special\"\n=SUM(1,2)"), channel("y", "=2+3")];
+        let channels = vec![
+            channel("x", "Name, \"special\"\n=SUM(1,2)"),
+            channel("y", "=2+3"),
+        ];
         let results = HashMap::from([(
             "x".to_owned(),
             ReportEntry {
