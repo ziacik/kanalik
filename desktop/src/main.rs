@@ -1,5 +1,6 @@
 mod catalog;
 mod checker;
+mod report;
 mod tv_player;
 mod ui;
 
