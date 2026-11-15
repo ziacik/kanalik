@@ -14,7 +14,7 @@ use mpv_engine::PlaybackEvent;
 
 use crate::tv_player::TvPlayer;
 
-use crate::catalog::{self, Channel, LoadedCatalog};
+use crate::catalog::{self, CatalogSource, Channel, LoadedCatalog};
 use crate::checker::{self, CheckResult, CheckStatus};
 use crate::report::{self, ReportEntry};
 
@@ -26,6 +26,8 @@ struct AppState {
     rows: HashMap<String, CheckerRow>,
     results: HashMap<String, ReportEntry>,
     active_id: Option<String>,
+    source: CatalogSource,
+    pending_source: Option<CatalogSource>,
     running: bool,
     completed: usize,
     online: usize,
@@ -42,6 +44,10 @@ struct CheckerRow {
 struct Ui {
     window: adw::ApplicationWindow,
     header: adw::HeaderBar,
+    window_title: adw::WindowTitle,
+    main_toasts: adw::ToastOverlay,
+    load_json_button: gtk::Button,
+    default_catalog_button: gtk::Button,
     sidebar: gtk::Box,
     footer: gtk::Box,
     search: gtk::SearchEntry,
@@ -62,7 +68,7 @@ struct Ui {
 }
 
 enum Message {
-    Catalog(Result<LoadedCatalog, String>),
+    Catalog(CatalogSource, Result<LoadedCatalog, String>),
     Checking(String),
     Checked(String, CheckResult),
     Finished,
@@ -87,7 +93,8 @@ fn build_ui(app: &adw::Application) {
         .build();
 
     let header = adw::HeaderBar::new();
-    header.set_title_widget(Some(&adw::WindowTitle::new("Kanálik", "Live television")));
+    let window_title = adw::WindowTitle::new("Kanálik", "Live television");
+    header.set_title_widget(Some(&window_title));
 
     let refresh_button = gtk::Button::from_icon_name("view-refresh-symbolic");
     refresh_button.set_tooltip_text(Some("Reload channels"));
@@ -102,6 +109,12 @@ fn build_ui(app: &adw::Application) {
     menu_content.set_margin_bottom(8);
     menu_content.set_margin_start(8);
     menu_content.set_margin_end(8);
+    let load_json_button = gtk::Button::with_label("Load channels JSON…");
+    menu_content.append(&load_json_button);
+    let default_catalog_button = gtk::Button::with_label("Use default catalog");
+    default_catalog_button.set_sensitive(false);
+    menu_content.append(&default_catalog_button);
+    menu_content.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
     let checker_menu_button = gtk::Button::with_label("Check stream availability…");
     menu_content.append(&checker_menu_button);
     popover.set_child(Some(&menu_content));
@@ -225,7 +238,9 @@ fn build_ui(app: &adw::Application) {
     let content = gtk::Box::new(gtk::Orientation::Vertical, 0);
     content.append(&header);
     content.append(&paned);
-    window.set_content(Some(&content));
+    let main_toasts = adw::ToastOverlay::new();
+    main_toasts.set_child(Some(&content));
+    window.set_content(Some(&main_toasts));
 
     let checker_window = gtk::Window::builder()
         .title("Stream Checker · Kanálik")
@@ -294,6 +309,10 @@ fn build_ui(app: &adw::Application) {
     let ui = Ui {
         window,
         header,
+        window_title,
+        main_toasts,
+        load_json_button,
+        default_catalog_button,
         sidebar,
         footer,
         search,
@@ -317,8 +336,58 @@ fn build_ui(app: &adw::Application) {
             "{error}. External mpv playback is still available."
         ));
     }
-    let state = Rc::new(RefCell::new(AppState::default()));
+    let state = Rc::new(RefCell::new(AppState {
+        source: catalog::load_saved_source(),
+        ..AppState::default()
+    }));
     let (sender, receiver) = mpsc::channel();
+
+    {
+        let ui = ui.clone();
+        let state = state.clone();
+        let sender = sender.clone();
+        let menu_popover = popover.clone();
+        ui.load_json_button.clone().connect_clicked(move |_| {
+            menu_popover.popdown();
+            let dialog = gtk::FileDialog::new();
+            dialog.set_title("Choose channels JSON");
+            let ui = ui.clone();
+            let state = state.clone();
+            let sender = sender.clone();
+            let parent = ui.window.clone();
+            dialog.open(
+                Some(&parent),
+                None::<&gio::Cancellable>,
+                move |result| {
+                    if let Ok(file) = result {
+                        if let Some(path) = file.path() {
+                            request_catalog_load(
+                                &ui,
+                                &state,
+                                &sender,
+                                CatalogSource::Local(path),
+                            );
+                        } else {
+                            ui.main_toasts.add_toast(adw::Toast::new(
+                                "Please select a local JSON file",
+                            ));
+                        }
+                    }
+                },
+            );
+        });
+    }
+
+    {
+        let ui = ui.clone();
+        let state = state.clone();
+        let sender = sender.clone();
+        let menu_popover = popover.clone();
+        ui.default_catalog_button.clone().connect_clicked(move |_| {
+            menu_popover.popdown();
+            request_catalog_load(&ui, &state, &sender, CatalogSource::Remote);
+        });
+    }
 
     {
         let ui = ui.clone();
@@ -469,12 +538,8 @@ fn build_ui(app: &adw::Application) {
         let ui = ui.clone();
         let state = state.clone();
         ui.refresh_button.clone().connect_clicked(move |_| {
-            if state.borrow().running {
-                return;
-            }
-            ui.refresh_button.set_sensitive(false);
-            ui.playback_status.set_text("Refreshing channel catalog…");
-            spawn_catalog_load(sender.clone());
+            let source = state.borrow().source.clone();
+            request_catalog_load(&ui, &state, &sender, source);
         });
     }
     {
@@ -496,7 +561,7 @@ fn build_ui(app: &adw::Application) {
                 set_status(row, "Queued", "content-loading-symbolic", None, None);
             }
             ui.check_button.set_sensitive(false);
-            ui.refresh_button.set_sensitive(false);
+            update_catalog_actions(&ui, &state);
             update_summary(&ui, &state);
             spawn_checks(state.channels.clone(), sender.clone());
         });
@@ -520,14 +585,20 @@ fn build_ui(app: &adw::Application) {
         });
     }
 
-    spawn_catalog_load(sender);
+    let source = state.borrow().source.clone();
+    request_catalog_load(&ui, &state, &sender, source);
     ui.window.present();
 }
 
 fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
     match message {
-        Message::Catalog(Ok(loaded)) => {
+        Message::Catalog(source, Ok(loaded)) => {
             let mut state_mut = state.borrow_mut();
+            if state_mut.pending_source.as_ref() != Some(&source) {
+                return;
+            }
+            state_mut.pending_source = None;
+            state_mut.source = source.clone();
             while let Some(child) = ui.channel_list.first_child() {
                 ui.channel_list.remove(&child);
             }
@@ -557,7 +628,8 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
             ui.check_button.set_sensitive(true);
             ui.copy_report_button.set_sensitive(true);
             ui.export_report_button.set_sensitive(true);
-            ui.refresh_button.set_sensitive(true);
+            update_catalog_actions(ui, &state_mut);
+            ui.window_title.set_subtitle(&loaded.source);
             ui.checker_summary.set_text(&format!(
                 "{} channels · {} · Not checked",
                 state_mut.channels.len(),
@@ -570,17 +642,27 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
                 .or_else(|| state_mut.channels.first())
                 .cloned();
             drop(state_mut);
+            if let Err(error) = catalog::save_source(&source) {
+                ui.main_toasts.add_toast(adw::Toast::new(&error));
+            }
             if let Some(channel) = next_channel {
                 play_channel(ui, state, &channel);
             }
         }
-        Message::Catalog(Err(error)) => {
-            ui.playback_status.set_text(&error);
-            ui.refresh_button.set_sensitive(true);
-            let has_channels = !state.borrow().channels.is_empty();
-            ui.check_button.set_sensitive(has_channels);
-            ui.copy_report_button.set_sensitive(has_channels);
-            ui.export_report_button.set_sensitive(has_channels);
+        Message::Catalog(source, Err(error)) => {
+            let mut state = state.borrow_mut();
+            if state.pending_source.as_ref() != Some(&source) {
+                return;
+            }
+            state.pending_source = None;
+            update_catalog_actions(ui, &state);
+            ui.check_button.set_sensitive(!state.channels.is_empty());
+            ui.copy_report_button.set_sensitive(!state.channels.is_empty());
+            ui.export_report_button.set_sensitive(!state.channels.is_empty());
+            ui.main_toasts.add_toast(adw::Toast::new(&error));
+            if state.channels.is_empty() {
+                ui.playback_status.set_text(&error);
+            }
         }
         Message::Checking(id) => {
             if let Some(row) = state.borrow().rows.get(&id) {
@@ -641,7 +723,7 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
             let mut state = state.borrow_mut();
             state.running = false;
             ui.check_button.set_sensitive(true);
-            ui.refresh_button.set_sensitive(true);
+            update_catalog_actions(ui, &state);
             update_summary(ui, &state);
         }
     }
@@ -798,9 +880,36 @@ fn update_playback_status(ui: &Ui) {
     }
 }
 
-fn spawn_catalog_load(sender: mpsc::Sender<Message>) {
+fn update_catalog_actions(ui: &Ui, state: &AppState) {
+    let ready = !state.running && state.pending_source.is_none();
+    ui.refresh_button.set_sensitive(ready);
+    ui.load_json_button.set_sensitive(ready);
+    ui.default_catalog_button
+        .set_sensitive(ready && state.source != CatalogSource::Remote);
+}
+
+fn request_catalog_load(
+    ui: &Ui,
+    state: &Rc<RefCell<AppState>>,
+    sender: &mpsc::Sender<Message>,
+    source: CatalogSource,
+) {
+    let mut current = state.borrow_mut();
+    if current.running || current.pending_source.is_some() {
+        return;
+    }
+    current.pending_source = Some(source.clone());
+    update_catalog_actions(ui, &current);
+    ui.check_button.set_sensitive(false);
+    ui.playback_status.set_text("Loading channel catalog…");
+    drop(current);
+    spawn_catalog_load(sender.clone(), source);
+}
+
+fn spawn_catalog_load(sender: mpsc::Sender<Message>, source: CatalogSource) {
     thread::spawn(move || {
-        let _ = sender.send(Message::Catalog(catalog::load_catalog()));
+        let loaded = catalog::load_catalog(&source);
+        let _ = sender.send(Message::Catalog(source, loaded));
     });
 }
 
