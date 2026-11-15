@@ -9,7 +9,10 @@ use std::thread;
 use std::time::Duration;
 
 use adw::prelude::*;
-use gtk::{gdk, gio, glib};
+use gtk::{gdk, glib};
+use mpv_engine::PlaybackEvent;
+
+use crate::tv_player::TvPlayer;
 
 use crate::catalog::{self, Channel, LoadedCatalog};
 use crate::checker::{self, CheckResult, CheckStatus};
@@ -41,7 +44,7 @@ struct Ui {
     footer: gtk::Box,
     search: gtk::SearchEntry,
     channel_list: gtk::ListBox,
-    video: gtk::Video,
+    video: Option<TvPlayer>,
     empty_page: adw::StatusPage,
     channel_title: gtk::Label,
     playback_status: gtk::Label,
@@ -136,10 +139,11 @@ fn build_ui(app: &adw::Application) {
     sidebar.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
     sidebar.append(&channel_scroll);
 
-    let video = gtk::Video::new();
-    video.set_autoplay(true);
-    video.set_hexpand(true);
-    video.set_vexpand(true);
+    // GTK Video/GStreamer hangs on some otherwise playable IPTV/HLS streams.
+    // libmpv draws directly into a GTK GLArea, including on Wayland.
+    let embedded_player = TvPlayer::new();
+    let embedded_error = embedded_player.as_ref().err().cloned();
+    let video = embedded_player.ok();
 
     let empty_page = adw::StatusPage::builder()
         .icon_name("video-display-symbolic")
@@ -148,7 +152,14 @@ fn build_ui(app: &adw::Application) {
         .build();
 
     let video_overlay = gtk::Overlay::new();
-    video_overlay.set_child(Some(&video));
+    if let Some(ref embedded) = video {
+        video_overlay.set_child(Some(&embedded.area));
+    } else {
+        let unavailable = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        unavailable.set_hexpand(true);
+        unavailable.set_vexpand(true);
+        video_overlay.set_child(Some(&unavailable));
+    }
     video_overlay.add_overlay(&empty_page);
     video_overlay.set_hexpand(true);
     video_overlay.set_vexpand(true);
@@ -282,6 +293,10 @@ fn build_ui(app: &adw::Application) {
         checker_summary,
         check_button,
     };
+    if let Some(error) = embedded_error {
+        ui.playback_status
+            .set_text(&format!("{error}. External mpv playback is still available."));
+    }
     let state = Rc::new(RefCell::new(AppState::default()));
     let (sender, receiver) = mpsc::channel();
 
@@ -605,33 +620,26 @@ fn play_channel(ui: &Ui, state: &Rc<RefCell<AppState>>, channel: &Channel) {
     ui.channel_title.set_text(&channel.name);
     ui.empty_page.set_visible(false);
 
-    if !channel.headers.is_empty() {
-        // GtkVideo does not expose custom HTTP headers. Keep these channels
-        // usable through the same mpv backend as the diagnostics tool.
-        ui.video.set_file(None::<&gio::File>);
-        match launch_mpv(channel) {
-            Ok(()) => ui
-                .playback_status
-                .set_text("Opened in mpv (custom HTTP headers)"),
-            Err(error) => ui.playback_status.set_text(&error),
+    if let Some(player) = &ui.video {
+        ui.playback_status.set_text("Connecting…");
+        if let Err(error) = player.load(channel) {
+            ui.playback_status.set_text(&error);
         }
     } else {
-        ui.playback_status.set_text("Connecting…");
-        let file = gio::File::for_uri(&channel.url);
-        ui.video.set_file(Some(&file));
-        if let Some(media) = ui.video.media_stream() {
-            media.play();
+        match launch_mpv(channel) {
+            Ok(()) => ui.playback_status.set_text("Playing in external mpv"),
+            Err(error) => ui.playback_status.set_text(&error),
         }
     }
     ui.pause_button
         .set_icon_name("media-playback-pause-symbolic");
-    let index = state
-        .borrow()
-        .channels
-        .iter()
-        .position(|candidate| candidate.id == channel.id);
-    if let Some(row) = index.and_then(|index| ui.channel_list.row_at_index(index as i32)) {
-        ui.channel_list.select_row(Some(&row));
+    let mut index = 0;
+    while let Some(row) = ui.channel_list.row_at_index(index) {
+        if row.widget_name().as_str() == channel.id {
+            ui.channel_list.select_row(Some(&row));
+            break;
+        }
+        index += 1;
     }
 }
 
@@ -653,16 +661,17 @@ fn change_channel(ui: &Ui, state: &Rc<RefCell<AppState>>, offset: isize) {
 }
 
 fn toggle_pause(ui: &Ui) {
-    if let Some(media) = ui.video.media_stream() {
-        if media.is_playing() {
-            media.pause();
-            ui.pause_button
-                .set_icon_name("media-playback-start-symbolic");
-        } else {
-            media.play();
-            ui.pause_button
-                .set_icon_name("media-playback-pause-symbolic");
+    let Some(player) = &ui.video else { return };
+    match player.toggle_pause() {
+        Ok(paused) => {
+            ui.pause_button.set_icon_name(if paused {
+                "media-playback-start-symbolic"
+            } else {
+                "media-playback-pause-symbolic"
+            });
+            ui.playback_status.set_text(if paused { "Paused" } else { "Live" });
         }
+        Err(error) => ui.playback_status.set_text(&error),
     }
 }
 
@@ -679,16 +688,23 @@ fn toggle_fullscreen(ui: &Ui) {
 }
 
 fn update_playback_status(ui: &Ui) {
-    if let Some(media) = ui.video.media_stream() {
-        if let Some(error) = media.error() {
-            ui.playback_status
-                .set_text(&format!("Playback error: {error}. Try mpv."));
-        } else if media.is_prepared() {
-            if media.is_playing() {
-                ui.playback_status.set_text("Live");
-            } else {
-                ui.playback_status.set_text("Paused");
+    let Some(player) = &ui.video else { return };
+    if let Some(error) = player.error() {
+        ui.playback_status.set_text(&error);
+        return;
+    }
+    for event in player.events() {
+        match event {
+            PlaybackEvent::Loaded => ui.playback_status.set_text("Buffering…"),
+            PlaybackEvent::PlaybackRestart => {
+                ui.playback_status
+                    .set_text(if player.is_paused() { "Paused" } else { "Live" });
             }
+            PlaybackEvent::Failed { message, .. } => {
+                ui.playback_status.set_text(&format!("Playback failed: {message}"));
+            }
+            PlaybackEvent::Ended { .. } => ui.playback_status.set_text("Playback ended"),
+            _ => {}
         }
     }
 }
