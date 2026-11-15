@@ -99,7 +99,11 @@ pub fn check(channel: &Channel) -> CheckResult {
     };
 
     if timed_out {
-        return CheckResult::new(CheckStatus::TimedOut, started, "No playable media before timeout");
+        return CheckResult::new(
+            CheckStatus::TimedOut,
+            started,
+            "No playable media before timeout",
+        );
     }
 
     if output.status.success() && has_decoded_media(&String::from_utf8_lossy(&output.stdout)) {
@@ -129,7 +133,9 @@ mod tests {
 
     #[test]
     fn confirms_real_decoding_progress() {
-        assert!(has_decoded_media("frame=25\nout_time_us=1500000\nprogress=end\n"));
+        assert!(has_decoded_media(
+            "frame=25\nout_time_us=1500000\nprogress=end\n"
+        ));
     }
 
     #[test]
