@@ -1,57 +1,51 @@
 # Kanálik for GNOME
 
-Native TV application for Linux, built with Rust, GTK4 and libadwaita.
+Native TV app for Linux: Rust + GTK4/libadwaita, with an **embedded
+libmpv player** (GTK GLArea/OpenGL rendering) compatible with GNOME/Wayland.
 
-## Watching TV
+## TV first
 
-- **Live TV is the primary screen**, with a searchable channel list on the left
-  and an embedded GTK/GStreamer video player on the right.
-- Switch channels by clicking on the list or using Up/Down.
-- Playback controls: pause/resume (Space), previous/next channel, fullscreen (F11 / Esc).
-- Open the current channel in **mpv** as a fallback via the external-player button.
-- Channels requiring custom HTTP headers (such as Referer) open in mpv automatically,
-  since the GTK video widget does not expose those headers.
-- Automatically resumes the last selected channel at startup.
-- Uses the same live catalog as Android: https://plainraw.com/json/cbc833011422.
-  Keeps an offline cache if loading fails.
+- Live TV screen: channel list on the left, **mpv video inside the app**
+  on the right. No GStreamer/GTK Video player.
+- Built-in playback supports HLS and HEVC and applies channel-specific HTTP
+  headers (including Referer and User-Agent).
+- Click a channel, Up/Down to switch, Space to pause, F11 for fullscreen.
+- Remembers the last watched channel and starts it when the catalog loads.
+- External mpv button remains available as a fallback.
+- Uses the Android application's live catalog
+  https://plainraw.com/json/cbc833011422, with offline cache.
 
-## Diagnostics: Stream Checker
+## Diagnostic stream checker
 
-Use the **⋮ application menu → Check stream availability…** to open the checker.
-It is a separate secondary window; it does not interrupt TV playback.
+Open the app menu and choose **Check stream availability…**.
 
-- Checks all direct channels in the JSON using three concurrent **mpv** probes.
-- Attempts to render 12 video frames with no visible output or audio.
-- Reports Online, Failed or Unknown (timeout) with the elapsed time and error details.
-- Uses the same mpv decoder and HTTP headers as external playback.
-- Timeout is *inconclusive*, not an automatic failure.
+- Checks three channels concurrently with headless **mpv**, using exactly
+  the same stream URLs and HTTP headers.
+- A successful sample = online. Timeout = **unknown**, not failed.
+- Details and elapsed times are shown in the secondary window.
+- Checking does not interrupt TV playback.
 
-## Requirements and run
+## Manjaro / Arch Linux
 
-GTK4 4.12+, libadwaita 1.4+, Rust toolchain, **mpv** and GStreamer playback
-plugins. MPV is also required for checks.
+Install the GTK development libraries, libmpv, and Rust toolchain:
 
-On Pop!_OS / Ubuntu:
+    sudo pacman -S --needed base-devel pkgconf rust gtk4 libadwaita mpv libglvnd
 
-    sudo apt install libgtk-4-dev libadwaita-1-dev pkg-config mpv \
-      gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
-      gstreamer1.0-plugins-bad gstreamer1.0-libav
+Run from the Git repository:
 
     git fetch origin feature/gnome-stream-checker
     git switch feature/gnome-stream-checker
     cd desktop
     cargo run --release
 
-The embedded GTK player depends on installed GStreamer codecs and HTTP/HLS
-plugins. If it cannot open a channel, use the external mpv playback button.
+The embedded player uses libmpv via GTK4's GLArea/OpenGL and EGL, not X11's
+window ID, so it is suitable for Wayland. On distributions where
+libmpv development files are packaged separately, install them as well.
 
-## Quality checks
+## CI
 
-    cd desktop
     cargo fmt --all --check
     cargo test
     cargo clippy --all-targets -- -D warnings
 
-This app is independent of the Android build. EPG, archive and Sweet.tv
-providers are not yet ported. It currently uses direct channels in the
-remote JSON catalog.
+EPG, archive and Sweet.tv resolvers are not yet ported to the desktop app.
