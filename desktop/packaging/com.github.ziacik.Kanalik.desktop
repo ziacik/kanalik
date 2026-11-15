@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Kanálik
+GenericName=TV Player and Stream Checker
+Comment=Play channels and check stream availability
+Exec=kanalik-gnome
+Icon=video-display
+Terminal=false
+Categories=AudioVideo;Video;Player;GTK;
+StartupNotify=true

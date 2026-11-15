@@ -1,0 +1,36 @@
+name: GNOME Desktop CI
+
+on:
+  push:
+    paths:
+      - "desktop/**"
+      - ".github/workflows/desktop-ci.yml"
+  pull_request:
+    paths:
+      - "desktop/**"
+      - ".github/workflows/desktop-ci.yml"
+
+jobs:
+  rust:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GTK development dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev libadwaita-1-dev libmpv-dev pkg-config
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Test
+        run: cargo test
+      - name: Clippy (warnings as errors)
+        run: cargo clippy --all-targets -- -D warnings
