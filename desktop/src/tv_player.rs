@@ -203,13 +203,9 @@ fn attach_renderer(engine: &Engine, redraw_tx: mpsc::SyncSender<()>) -> Result<(
     // SAFETY: called by GtkGLArea::realize after make_current(). Every
     // render/detach operation is likewise confined to its GTK GL callback.
     unsafe {
-        engine.attach_gl_render(
-            Box::new(resolve),
-            GlRenderOptions::default(),
-            move || {
-                let _ = redraw_tx.try_send(());
-            },
-        )
+        engine.attach_gl_render(Box::new(resolve), GlRenderOptions::default(), move || {
+            let _ = redraw_tx.try_send(());
+        })
     }
     .map_err(|err| format!("Cannot attach libmpv OpenGL renderer: {err}"))
 }
