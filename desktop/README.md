@@ -23,6 +23,11 @@ Open the app menu and choose **Check stream availability…**.
   the same stream URLs and HTTP headers.
 - A successful sample = online. Timeout = **unknown**, not failed.
 - Details and elapsed times are shown in the secondary window.
+- **Copy Report** copies the full CSV report to the clipboard.
+- **Export CSV…** opens a native Save dialog for the same report.
+- Reports include every catalog channel in its original order, ID, name, URL, status,
+  time to complete, local check timestamp, and diagnostic details. Incomplete
+  checks are marked Pending or Not checked, never silently omitted.
 - Checking does not interrupt TV playback.
 
 ## Manjaro / Arch Linux
