@@ -355,26 +355,16 @@ fn build_ui(app: &adw::Application) {
             let state = state.clone();
             let sender = sender.clone();
             let parent = ui.window.clone();
-            dialog.open(
-                Some(&parent),
-                None::<&gio::Cancellable>,
-                move |result| {
-                    if let Ok(file) = result {
-                        if let Some(path) = file.path() {
-                            request_catalog_load(
-                                &ui,
-                                &state,
-                                &sender,
-                                CatalogSource::Local(path),
-                            );
-                        } else {
-                            ui.main_toasts.add_toast(adw::Toast::new(
-                                "Please select a local JSON file",
-                            ));
-                        }
+            dialog.open(Some(&parent), None::<&gio::Cancellable>, move |result| {
+                if let Ok(file) = result {
+                    if let Some(path) = file.path() {
+                        request_catalog_load(&ui, &state, &sender, CatalogSource::Local(path));
+                    } else {
+                        ui.main_toasts
+                            .add_toast(adw::Toast::new("Please select a local JSON file"));
                     }
-                },
-            );
+                }
+            });
         });
     }
 
@@ -657,8 +647,10 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
             state.pending_source = None;
             update_catalog_actions(ui, &state);
             ui.check_button.set_sensitive(!state.channels.is_empty());
-            ui.copy_report_button.set_sensitive(!state.channels.is_empty());
-            ui.export_report_button.set_sensitive(!state.channels.is_empty());
+            ui.copy_report_button
+                .set_sensitive(!state.channels.is_empty());
+            ui.export_report_button
+                .set_sensitive(!state.channels.is_empty());
             ui.main_toasts.add_toast(adw::Toast::new(&error));
             if state.channels.is_empty() {
                 ui.playback_status.set_text(&error);
