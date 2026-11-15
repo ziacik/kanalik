@@ -302,7 +302,11 @@ fn build_ui(app: &adw::Application) {
         ui.channel_list.clone().connect_row_activated(move |_, row| {
             let channel = {
                 let state = state.borrow();
-                state.channels.get(row.index() as usize).cloned()
+                state
+                    .channels
+                    .iter()
+                    .find(|channel| channel.id == row.widget_name())
+                    .cloned()
             };
             if let Some(channel) = channel {
                 play_channel(&ui, &state, &channel);
@@ -453,6 +457,7 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
                     .title(&channel.name)
                     .activatable(true)
                     .build();
+                row.set_widget_name(&channel.id);
                 ui.channel_list.append(&row);
                 let checker = make_checker_row(&channel);
                 ui.checker_list.append(&checker.0);
