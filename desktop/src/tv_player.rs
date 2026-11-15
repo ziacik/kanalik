@@ -84,8 +84,8 @@ impl TvPlayer {
                 unsafe {
                     gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fbo);
                 }
-                let width = area.allocated_width() * area.scale_factor();
-                let height = area.allocated_height() * area.scale_factor();
+                let width = area.width() * area.scale_factor();
+                let height = area.height() * area.scale_factor();
                 if width > 0
                     && height > 0
                     && let Err(err) = engine.render_gl(fbo, width, height, true)
@@ -190,7 +190,7 @@ fn attach_renderer(engine: &Engine, redraw_tx: mpsc::SyncSender<()>) -> Result<(
             .map_err(|err| format!("Cannot find eglGetProcAddress: {err}"))?
     };
 
-    let mut resolve = move |name: &str| -> *mut c_void {
+    let resolve = move |name: &str| -> *mut c_void {
         let _keep_egl_loaded = &egl;
         let Ok(name) = CString::new(name) else {
             return std::ptr::null_mut();
