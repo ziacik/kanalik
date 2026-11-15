@@ -9,13 +9,14 @@ use std::thread;
 use std::time::Duration;
 
 use adw::prelude::*;
-use gtk::{gdk, glib};
+use gtk::{gdk, gio, glib};
 use mpv_engine::PlaybackEvent;
 
 use crate::tv_player::TvPlayer;
 
 use crate::catalog::{self, Channel, LoadedCatalog};
 use crate::checker::{self, CheckResult, CheckStatus};
+use crate::report::{self, ReportEntry};
 
 const WORKERS: usize = 3;
 
@@ -23,6 +24,7 @@ const WORKERS: usize = 3;
 struct AppState {
     channels: Vec<Channel>,
     rows: HashMap<String, CheckerRow>,
+    results: HashMap<String, ReportEntry>,
     active_id: Option<String>,
     running: bool,
     completed: usize,
@@ -54,6 +56,9 @@ struct Ui {
     checker_list: gtk::ListBox,
     checker_summary: gtk::Label,
     check_button: gtk::Button,
+    copy_report_button: gtk::Button,
+    export_report_button: gtk::Button,
+    report_toasts: adw::ToastOverlay,
 }
 
 enum Message {
@@ -238,6 +243,15 @@ fn build_ui(app: &adw::Application) {
     check_button.set_sensitive(false);
     checker_header.pack_end(&check_button);
 
+    let copy_report_button = gtk::Button::from_icon_name("edit-copy-symbolic");
+    copy_report_button.set_tooltip_text(Some("Copy full CSV report to clipboard"));
+    copy_report_button.set_sensitive(false);
+    checker_header.pack_start(&copy_report_button);
+
+    let export_report_button = gtk::Button::with_label("Export CSV…");
+    export_report_button.set_sensitive(false);
+    checker_header.pack_start(&export_report_button);
+
     let checker_list = gtk::ListBox::new();
     checker_list.add_css_class("boxed-list");
     checker_list.set_selection_mode(gtk::SelectionMode::None);
@@ -259,7 +273,9 @@ fn build_ui(app: &adw::Application) {
     checker_content.append(&checker_scroll);
     checker_content.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
     checker_content.append(&checker_summary);
-    checker_window.set_child(Some(&checker_content));
+    let report_toasts = adw::ToastOverlay::new();
+    report_toasts.set_child(Some(&checker_content));
+    checker_window.set_child(Some(&report_toasts));
     checker_window.connect_close_request(|window| {
         window.set_visible(false);
         glib::Propagation::Stop
@@ -292,6 +308,9 @@ fn build_ui(app: &adw::Application) {
         checker_list,
         checker_summary,
         check_button,
+        copy_report_button,
+        export_report_button,
+        report_toasts,
     };
     if let Some(error) = embedded_error {
         ui.playback_status.set_text(&format!(
@@ -300,6 +319,53 @@ fn build_ui(app: &adw::Application) {
     }
     let state = Rc::new(RefCell::new(AppState::default()));
     let (sender, receiver) = mpsc::channel();
+
+    {
+        let ui = ui.clone();
+        let state = state.clone();
+        ui.copy_report_button.clone().connect_clicked(move |_| {
+            let csv = {
+                let state = state.borrow();
+                report::to_csv(&state.channels, &state.results, state.running)
+            };
+            if let Some(display) = gdk::Display::default() {
+                display.clipboard().set_text(&csv);
+                ui.report_toasts
+                    .add_toast(adw::Toast::new("Stream report copied"));
+            }
+        });
+    }
+
+    {
+        let ui = ui.clone();
+        let state = state.clone();
+        ui.export_report_button.clone().connect_clicked(move |_| {
+            let csv = {
+                let state = state.borrow();
+                report::to_csv(&state.channels, &state.results, state.running)
+            };
+            let dialog = gtk::FileDialog::new();
+            dialog.set_title("Export stream report");
+            dialog.set_initial_name("kanalik-stream-report.csv");
+            let toasts = ui.report_toasts.clone();
+            dialog.save(
+                Some(&ui.checker_window),
+                None::<&gio::Cancellable>,
+                move |result| {
+                    if let Ok(file) = result {
+                        let message = match file.path() {
+                            Some(path) => match fs::write(path, &csv) {
+                                Ok(()) => "Stream report exported".to_owned(),
+                                Err(error) => format!("Could not export report: {error}"),
+                            },
+                            None => "Cannot export to this non-local location".to_owned(),
+                        };
+                        toasts.add_toast(adw::Toast::new(&message));
+                    }
+                },
+            );
+        });
+    }
 
     {
         let ui = ui.clone();
@@ -425,6 +491,7 @@ fn build_ui(app: &adw::Application) {
             state.online = 0;
             state.failed = 0;
             state.timed_out = 0;
+            state.results.clear();
             for row in state.rows.values() {
                 set_status(row, "Queued", "content-loading-symbolic", None, None);
             }
@@ -469,6 +536,7 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
             }
 
             state_mut.rows.clear();
+            state_mut.results.clear();
             state_mut.channels = loaded.channels;
             state_mut.completed = 0;
             state_mut.online = 0;
@@ -487,6 +555,8 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
             }
             ui.channel_list.invalidate_filter();
             ui.check_button.set_sensitive(true);
+            ui.copy_report_button.set_sensitive(true);
+            ui.export_report_button.set_sensitive(true);
             ui.refresh_button.set_sensitive(true);
             ui.checker_summary.set_text(&format!(
                 "{} channels · {} · Not checked",
@@ -507,8 +577,10 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
         Message::Catalog(Err(error)) => {
             ui.playback_status.set_text(&error);
             ui.refresh_button.set_sensitive(true);
-            ui.check_button
-                .set_sensitive(!state.borrow().channels.is_empty());
+            let has_channels = !state.borrow().channels.is_empty();
+            ui.check_button.set_sensitive(has_channels);
+            ui.copy_report_button.set_sensitive(has_channels);
+            ui.export_report_button.set_sensitive(has_channels);
         }
         Message::Checking(id) => {
             if let Some(row) = state.borrow().rows.get(&id) {
@@ -549,6 +621,20 @@ fn handle_message(message: Message, ui: &Ui, state: &Rc<RefCell<AppState>>) {
                 CheckStatus::Failed => state.failed += 1,
                 CheckStatus::TimedOut => state.timed_out += 1,
             }
+            let checked_at = glib::DateTime::now_local()
+                .ok()
+                .and_then(|date| date.format("%Y-%m-%d %H:%M:%S %z").ok())
+                .map(|date| date.to_string())
+                .unwrap_or_default();
+            state.results.insert(
+                id,
+                ReportEntry {
+                    status: result.status,
+                    elapsed: result.elapsed,
+                    checked_at,
+                    details: result.details,
+                },
+            );
             update_summary(ui, &state);
         }
         Message::Finished => {
