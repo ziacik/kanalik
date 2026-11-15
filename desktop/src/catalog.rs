@@ -88,8 +88,9 @@ pub fn load_catalog() -> Result<LoadedCatalog, String> {
         Err(network_error) => {
             let cached = fs::read_to_string(cache_path())
                 .map_err(|_| format!("Cannot fetch channel catalog: {network_error}"))?;
-            let channels = parse_catalog(&cached)
-                .map_err(|err| format!("Cannot fetch channel catalog: {network_error}; cache: {err}"))?;
+            let channels = parse_catalog(&cached).map_err(|err| {
+                format!("Cannot fetch channel catalog: {network_error}; cache: {err}")
+            })?;
             Ok(LoadedCatalog {
                 channels,
                 source: "Cached catalog (offline)",
