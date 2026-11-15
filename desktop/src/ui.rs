@@ -343,10 +343,8 @@ fn build_ui(app: &adw::Application) {
                         .cloned()
                 })
             };
-            if let Some(channel) = channel {
-                if let Err(error) = launch_mpv(&channel) {
-                    ui.playback_status.set_text(&error);
-                }
+            if let Some(channel) = channel && let Err(error) = launch_mpv(&channel) {
+                ui.playback_status.set_text(&error);
             }
         });
     }
@@ -630,10 +628,8 @@ fn play_channel(ui: &Ui, state: &Rc<RefCell<AppState>>, channel: &Channel) {
         .channels
         .iter()
         .position(|candidate| candidate.id == channel.id);
-    if let Some(index) = index {
-        if let Some(row) = ui.channel_list.row_at_index(index as i32) {
-            ui.channel_list.select_row(Some(&row));
-        }
+    if let Some(row) = index.and_then(|index| ui.channel_list.row_at_index(index as i32)) {
+        ui.channel_list.select_row(Some(&row));
     }
 }
 
