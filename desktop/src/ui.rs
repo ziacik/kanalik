@@ -294,8 +294,9 @@ fn build_ui(app: &adw::Application) {
         check_button,
     };
     if let Some(error) = embedded_error {
-        ui.playback_status
-            .set_text(&format!("{error}. External mpv playback is still available."));
+        ui.playback_status.set_text(&format!(
+            "{error}. External mpv playback is still available."
+        ));
     }
     let state = Rc::new(RefCell::new(AppState::default()));
     let (sender, receiver) = mpsc::channel();
@@ -669,7 +670,8 @@ fn toggle_pause(ui: &Ui) {
             } else {
                 "media-playback-pause-symbolic"
             });
-            ui.playback_status.set_text(if paused { "Paused" } else { "Live" });
+            ui.playback_status
+                .set_text(if paused { "Paused" } else { "Live" });
         }
         Err(error) => ui.playback_status.set_text(&error),
     }
@@ -701,7 +703,8 @@ fn update_playback_status(ui: &Ui) {
                     .set_text(if player.is_paused() { "Paused" } else { "Live" });
             }
             PlaybackEvent::Failed { message, .. } => {
-                ui.playback_status.set_text(&format!("Playback failed: {message}"));
+                ui.playback_status
+                    .set_text(&format!("Playback failed: {message}"));
             }
             PlaybackEvent::Ended { .. } => ui.playback_status.set_text("Playback ended"),
             _ => {}
