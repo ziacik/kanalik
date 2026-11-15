@@ -343,7 +343,9 @@ fn build_ui(app: &adw::Application) {
                         .cloned()
                 })
             };
-            if let Some(channel) = channel && let Err(error) = launch_mpv(&channel) {
+            if let Some(channel) = channel
+                && let Err(error) = launch_mpv(&channel)
+            {
                 ui.playback_status.set_text(&error);
             }
         });
