@@ -346,7 +346,7 @@ fn build_ui(app: &adw::Application) {
             };
             let dialog = gtk::FileDialog::new();
             dialog.set_title("Export stream report");
-            dialog.set_initial_name("kanalik-stream-report.csv");
+            dialog.set_initial_name(Some("kanalik-stream-report.csv"));
             let toasts = ui.report_toasts.clone();
             dialog.save(
                 Some(&ui.checker_window),
