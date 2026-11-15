@@ -80,8 +80,9 @@ pub fn load_catalog(source: &CatalogSource) -> Result<LoadedCatalog, String> {
     match source {
         CatalogSource::Remote => load_remote_catalog(),
         CatalogSource::Local(path) => {
-            let body = fs::read_to_string(path)
-                .map_err(|err| format!("Cannot read channels JSON from {}: {err}", path.display()))?;
+            let body = fs::read_to_string(path).map_err(|err| {
+                format!("Cannot read channels JSON from {}: {err}", path.display())
+            })?;
             let channels = parse_catalog(&body)?;
             Ok(LoadedCatalog {
                 channels,
@@ -211,7 +212,10 @@ mod tests {
         let source = CatalogSource::Local(file.clone());
         let loaded = load_catalog(&source).unwrap();
         assert_eq!(loaded.channels[0].name, "My TV");
-        assert_eq!(loaded.channels[0].headers["Referer"], "https://example.com/");
+        assert_eq!(
+            loaded.channels[0].headers["Referer"],
+            "https://example.com/"
+        );
         assert!(loaded.source.contains("channels.json"));
 
         let config = directory.join("config").join("source");
@@ -235,9 +239,12 @@ mod tests {
         ));
         fs::create_dir_all(&directory).unwrap();
         let file = directory.join("invalid.json");
-        fs::write(&file, r#"{"channels":[{"name":"missing ID","url":"https://example.com/"}]}"#).unwrap();
+        fs::write(
+            &file,
+            r#"{"channels":[{"name":"missing ID","url":"https://example.com/"}]}"#,
+        )
+        .unwrap();
         assert!(load_catalog(&CatalogSource::Local(file)).is_err());
         fs::remove_dir_all(&directory).unwrap();
     }
-
 }
