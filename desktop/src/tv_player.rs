@@ -11,7 +11,7 @@ use std::time::Duration;
 
 use gtk::glib;
 use gtk::prelude::*;
-use libloading::{Library, Symbol};
+use libloading::Library;
 use mpv_engine::{Engine, GlRenderOptions, PlaybackEvent};
 
 use crate::catalog::Channel;
@@ -185,9 +185,10 @@ fn attach_renderer(engine: &Engine, redraw_tx: mpsc::SyncSender<()>) -> Result<(
     // package just to build the Rust frontend.
     let egl = unsafe { Library::new("libEGL.so.1") }
         .map_err(|err| format!("Cannot load EGL for embedded mpv: {err}"))?;
-    let get_proc: Symbol<EglGetProcAddress> = unsafe { egl.get(b"eglGetProcAddress\0") }
-        .map_err(|err| format!("Cannot find eglGetProcAddress: {err}"))?;
-    let get_proc = *get_proc;
+    let get_proc: EglGetProcAddress = unsafe {
+        *egl.get::<EglGetProcAddress>(b"eglGetProcAddress\0")
+            .map_err(|err| format!("Cannot find eglGetProcAddress: {err}"))?
+    };
 
     let mut resolve = move |name: &str| -> *mut c_void {
         let _keep_egl_loaded = &egl;
