@@ -304,7 +304,7 @@ fn build_ui(app: &adw::Application) {
                     state
                         .channels
                         .iter()
-                        .find(|channel| channel.id == row.widget_name())
+                        .find(|channel| channel.id.as_str() == row.widget_name().as_str())
                         .cloned()
                 };
                 if let Some(channel) = channel {
