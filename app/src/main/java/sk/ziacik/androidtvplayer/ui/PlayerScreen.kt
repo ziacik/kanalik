@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,7 +36,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -648,8 +650,8 @@ private fun MarkizaCredentialsPanel(
     onSave: (String, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val email = rememberTextFieldState()
+    val password = rememberTextFieldState()
     Column(
         modifier = modifier
             .fillMaxWidth(0.68f)
@@ -661,21 +663,17 @@ private fun MarkizaCredentialsPanel(
         Text("MARKÍZA", color = Color.White.copy(alpha = 0.68f), fontWeight = FontWeight.Bold)
         Text("Prihlásenie k bezplatnému účtu", color = Color.White, fontSize = 22.sp)
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            state = email,
             label = { Text("E-mail") },
-            singleLine = true,
+            lineLimits = TextFieldLineLimits.SingleLine,
         )
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+        OutlinedSecureTextField(
+            state = password,
             label = { Text("Heslo") },
-            visualTransformation = PasswordVisualTransformation(),
-            singleLine = true,
         )
         Button(
-            onClick = { onSave(email, password) },
-            enabled = email.isNotBlank() && password.isNotBlank(),
+            onClick = { onSave(email.text.toString(), password.text.toString()) },
+            enabled = email.text.isNotBlank() && password.text.isNotBlank(),
         ) {
             Text("Prihlásiť sa")
         }

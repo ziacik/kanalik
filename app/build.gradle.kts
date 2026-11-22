@@ -13,6 +13,7 @@ val releaseKeyPassword = System.getenv("KANALIK_KEY_PASSWORD")
 android {
     namespace = "sk.ziacik.androidtvplayer"
     compileSdk = 37
+    compileSdkMinor = 1
 
     defaultConfig {
         applicationId = "sk.ziacik.androidtvplayer"

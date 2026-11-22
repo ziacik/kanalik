@@ -1,0 +1,17 @@
+[package]
+name = "kanalik-gnome"
+version = "0.1.0"
+edition = "2024"
+description = "Native GNOME TV player and IPTV stream checker for Kanálik"
+license = "MIT"
+
+[dependencies]
+gtk = { package = "gtk4", version = "0.11", features = ["v4_12"] }
+adw = { package = "libadwaita", version = "0.9", features = ["v1_4"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+wait-timeout = "0.2"
+mpv-engine = "0.2.1"
+libloading = "0.8"
+gl = "0.14"
