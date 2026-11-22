@@ -28,6 +28,24 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: desktop
+      - name: Check installer and GNOME launcher
+        run: |
+          bash -n install.sh
+          shellcheck -S warning install.sh
+          test_root="$(mktemp -d)"
+          trap 'rm -rf -- "$test_root"' EXIT
+          mkdir -p "$test_root/user home"
+          printf '#!/bin/sh\nexit 0\n' > "$test_root/sample-bin"
+          chmod +x "$test_root/sample-bin"
+          export HOME="$test_root/user home"
+          export XDG_DATA_HOME="$HOME/share"
+          bash install.sh --binary "$test_root/sample-bin"
+          test -x "$HOME/.local/bin/kanalik-gnome"
+          desktop-file-validate "$XDG_DATA_HOME/applications/com.github.ziacik.Kanalik.desktop"
+          grep -Fq 'Exec="' "$XDG_DATA_HOME/applications/com.github.ziacik.Kanalik.desktop"
+          bash install.sh --uninstall
+          test ! -e "$HOME/.local/bin/kanalik-gnome"
+          test ! -e "$XDG_DATA_HOME/applications/com.github.ziacik.Kanalik.desktop"
       - name: Check formatting
         run: cargo fmt --all --check
       - name: Test
