@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - "desktop/**"
+      - "install-desktop.sh"
       - ".github/workflows/desktop-ci.yml"
   pull_request:
     paths:
       - "desktop/**"
+      - "install-desktop.sh"
       - ".github/workflows/desktop-ci.yml"
 
 jobs:
@@ -30,8 +32,8 @@ jobs:
           workspaces: desktop
       - name: Check installer and GNOME launcher
         run: |
-          bash -n install.sh
-          shellcheck -S warning install.sh
+          bash -n ../install-desktop.sh
+          shellcheck -S warning ../install-desktop.sh
           test_root="$(mktemp -d)"
           trap 'rm -rf -- "$test_root"' EXIT
           mkdir -p "$test_root/user home"
@@ -39,11 +41,11 @@ jobs:
           chmod +x "$test_root/sample-bin"
           export HOME="$test_root/user home"
           export XDG_DATA_HOME="$HOME/share"
-          bash install.sh --binary "$test_root/sample-bin"
+          bash ../install-desktop.sh --binary "$test_root/sample-bin"
           test -x "$HOME/.local/bin/kanalik-gnome"
           desktop-file-validate "$XDG_DATA_HOME/applications/com.github.ziacik.Kanalik.desktop"
           grep -Fq 'Exec="' "$XDG_DATA_HOME/applications/com.github.ziacik.Kanalik.desktop"
-          bash install.sh --uninstall
+          bash ../install-desktop.sh --uninstall
           test ! -e "$HOME/.local/bin/kanalik-gnome"
           test ! -e "$XDG_DATA_HOME/applications/com.github.ziacik.Kanalik.desktop"
       - name: Check formatting

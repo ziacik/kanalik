@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+DESKTOP_DIR="$REPO_ROOT/desktop"
 APP_ID="com.github.ziacik.Kanalik"
 BINARY_NAME="kanalik-gnome"
 BIN_DIR="${KANALIK_BIN_DIR:-$HOME/.local/bin}"
 APPS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 TARGET_BIN="$BIN_DIR/$BINARY_NAME"
 TARGET_DESKTOP="$APPS_DIR/$APP_ID.desktop"
-DESKTOP_TEMPLATE="$SCRIPT_DIR/packaging/$APP_ID.desktop"
+DESKTOP_TEMPLATE="$DESKTOP_DIR/packaging/$APP_ID.desktop"
 
 usage() {
     cat <<'HELP'
-Usage: bash desktop/install.sh [--skip-deps] [--binary PATH]
-       bash desktop/install.sh --uninstall
+Usage: ./install-desktop.sh [--skip-deps] [--binary PATH]
+       ./install-desktop.sh --uninstall
 
 Build Kanálik in release mode and install it for the current Linux user.
   --skip-deps     Do not try to install missing system dependencies
@@ -123,8 +124,8 @@ if [[ -z "$binary" ]]; then
     fi
     check_build_deps
     printf 'Building Kanálik (release)...\n'
-    cargo build --release --manifest-path "$SCRIPT_DIR/Cargo.toml"
-    binary="${CARGO_TARGET_DIR:-$SCRIPT_DIR/target}/release/$BINARY_NAME"
+    cargo build --release --manifest-path "$DESKTOP_DIR/Cargo.toml"
+    binary="${CARGO_TARGET_DIR:-$DESKTOP_DIR/target}/release/$BINARY_NAME"
 fi
 [[ -f "$binary" && -x "$binary" ]] || fail "No executable found at $binary"
 

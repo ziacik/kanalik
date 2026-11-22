@@ -57,7 +57,7 @@ From the repository (currently the `feature/gnome-stream-checker` branch):
 
     git fetch origin feature/gnome-stream-checker
     git switch feature/gnome-stream-checker
-    ./desktop/install.sh
+    ./install-desktop.sh
 
 The installer checks for missing dependencies and offers to install them
 through `pacman` (Manjaro/Arch) or `apt` (Debian/Ubuntu). It builds the
@@ -73,9 +73,9 @@ preferences, cached catalogs or the last selected channel.
 
 Optional commands:
 
-    ./desktop/install.sh --skip-deps           # don't install system packages
-    ./desktop/install.sh --binary /path/to/kanalik-gnome  # install prebuilt binary
-    ./desktop/install.sh --uninstall            # remove app, preserve user data
+    ./install-desktop.sh --skip-deps           # don't install system packages
+    ./install-desktop.sh --binary /path/to/kanalik-gnome  # install prebuilt binary
+    ./install-desktop.sh --uninstall            # remove app, preserve user data
 
 The installer uses `$XDG_DATA_HOME` for the launcher if defined, and
 `$KANALIK_BIN_DIR` for the binary if explicitly set. GTK4 >= 4.12,
