@@ -51,22 +51,43 @@ Open the app menu and choose **Check stream availability…**.
   checks are marked Pending or Not checked, never silently omitted.
 - Checking does not interrupt TV playback.
 
-## Manjaro / Arch Linux
+## Install as a GNOME application
 
-Install the GTK development libraries, libmpv, and Rust toolchain:
-
-    sudo pacman -S --needed base-devel pkgconf rust gtk4 libadwaita mpv libglvnd
-
-Run from the Git repository:
+From the repository (currently the `feature/gnome-stream-checker` branch):
 
     git fetch origin feature/gnome-stream-checker
     git switch feature/gnome-stream-checker
+    ./desktop/install.sh
+
+The installer checks for missing dependencies and offers to install them
+through `pacman` (Manjaro/Arch) or `apt` (Debian/Ubuntu). It builds the
+release binary and installs **only for your user**, without needing `sudo`
+except when system dependencies are missing:
+
+- Binary: `~/.local/bin/kanalik-gnome`
+- GNOME application launcher: `~/.local/share/applications/com.github.ziacik.Kanalik.desktop`
+
+You can then launch **Kanálik** from GNOME's applications overview. Re-running
+the installer updates the binary and launcher, without clearing channel
+preferences, cached catalogs or the last selected channel.
+
+Optional commands:
+
+    ./desktop/install.sh --skip-deps           # don't install system packages
+    ./desktop/install.sh --binary /path/to/kanalik-gnome  # install prebuilt binary
+    ./desktop/install.sh --uninstall            # remove app, preserve user data
+
+The installer uses `$XDG_DATA_HOME` for the launcher if defined, and
+`$KANALIK_BIN_DIR` for the binary if explicitly set. GTK4 >= 4.12,
+libadwaita >= 1.4, libmpv and Rust with Cargo are required for compiling.
+
+### Run without installing
+
     cd desktop
     cargo run --release
 
 The embedded player uses libmpv via GTK4's GLArea/OpenGL and EGL, not X11's
-window ID, so it is suitable for Wayland. On distributions where
-libmpv development files are packaged separately, install them as well.
+window ID, so it is suitable for Wayland.
 
 ## CI
 
