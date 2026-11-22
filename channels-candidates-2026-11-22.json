@@ -1,0 +1,510 @@
+{
+  "version": 15,
+  "channels": [
+    {
+      "id": "jednotka",
+      "name": "JEDNOTKA",
+      "url": "http://212.102.38.45/live/test_jednotka_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "Jednotka HD.sk",
+        "skylink": "7a55634018be710a62bbf1750443a199"
+      },
+      "archive": {
+        "provider": "stvr",
+        "channelId": "1"
+      }
+    },
+    {
+      "id": "dvojka",
+      "name": "DVOJKA",
+      "url": "http://212.102.38.45/live/test_dvojka_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "Dvojka HD.sk",
+        "skylink": "584c86a108172efc9c27af06eb3d4652"
+      },
+      "archive": {
+        "provider": "stvr",
+        "channelId": "2"
+      }
+    },
+    {
+      "id": "markiza",
+      "name": "MARKÍZA",
+      "url": "http://212.102.38.45/live/test_markiza_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "Markíza HD.sk",
+        "skylink": "336e46bf4276e77a716e494c6285d5db"
+      }
+    },
+    {
+      "id": "doma",
+      "name": "DOMA",
+      "url": "http://212.102.38.45/live/test_doma_hd_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "Doma HD.sk"
+      }
+    },
+    {
+      "id": "dajto",
+      "name": "DAJTO",
+      "url": "http://212.102.38.45/live/test_dajto_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "DAJTO HD.sk"
+      }
+    },
+    {
+      "id": "markiza-krimi",
+      "name": "MARKÍZA KRIMI",
+      "url": "http://212.102.38.45/live/test_markiza_krimi_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "Markíza KRIMI HD.sk"
+      }
+    },
+    {
+      "id": "markiza-klasik",
+      "name": "MARKÍZA KLASIK",
+      "url": "http://212.102.38.45/live/markiza_klasik_hevc/index.m3u8",
+      "epg": {
+        "openEpg": "Markíza Klasik HD.sk"
+      }
+    },
+    {
+      "id": "stvr-24",
+      "name": "STVR :24",
+      "url": "http://212.102.38.45/live/test_trojka_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "RTVS 24 HD.sk",
+        "skylink": "6a5461ba82cabcb95db5b344e6440e15"
+      },
+      "archive": {
+        "provider": "stvr",
+        "channelId": "3"
+      }
+    },
+    {
+      "id": "stvr-sport",
+      "name": "STVR ŠPORT",
+      "url": "http://212.102.38.45/live/test_rtvs_sport_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "RTVS Šport.sk",
+        "skylink": "09fc492d319c8813389e11c167b3a053"
+      },
+      "archive": {
+        "provider": "stvr",
+        "channelId": "15"
+      }
+    },
+    {
+      "id": "joj",
+      "name": "JOJ",
+      "url": "http://212.102.38.45/live/test_joj_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "JOJ HD.sk",
+        "skylink": "84a2364ade7443e6d6afe03f9aa2361a"
+      }
+    },
+    {
+      "id": "joj-plus",
+      "name": "JOJ PLUS",
+      "url": "http://212.102.38.45/live/test_pluska_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "Plus HD.sk",
+        "skylink": "2aa59e1b0cb34399f6ffc387e52a437b"
+      }
+    },
+    {
+      "id": "joj-krimi",
+      "name": "JOJ KRIMI",
+      "url": "http://212.102.38.45/live/test_wau_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "JOJ KRIMI HD.sk",
+        "skylink": "d4bf459e0c7e39dff6a5dbf3c7c76432"
+      }
+    },
+    {
+      "id": "joj-sport",
+      "name": "JOJ ŠPORT",
+      "url": "http://185.188.188.237:5000/live/jojsport/playlist.m3u8",
+      "epg": {
+        "openEpg": "JOJ ŠPORT HD.sk",
+        "skylink": "eacbd3c220de39cfa7e7e4506192b1b2"
+      }
+    },
+    {
+      "id": "joj-family",
+      "name": "JOJ FAMILY",
+      "url": "http://212.102.38.45/live/test_joj_family_hevc_25p/playlist.m3u8"
+    },
+    {
+      "id": "jojko",
+      "name": "JOJKO",
+      "url": "http://212.102.38.45/live/test_jojko_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "Jojko HD.sk",
+        "skylink": "c562602b114a9614998fbb29142f4017"
+      }
+    },
+    {
+      "id": "joj-24",
+      "name": "JOJ 24",
+      "url": "https://live.cdn.joj.sk/live/andromeda/joj_news-720.m3u8",
+      "headers": {
+        "Referer": "https://media.joj.sk/"
+      },
+      "epg": {
+        "openEpg": "JOJ 24 HD.sk",
+        "skylink": "ce6596c6d0663e92b84184a09fa033a0"
+      }
+    },
+    {
+      "id": "joj-cinema",
+      "name": "JOJ CINEMA",
+      "url": "http://212.102.38.45/live/test_joj_cinema_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "JOJ Cinema HD.sk",
+        "skylink": "d214870fb6ac73b8b55d7767af74aef9"
+      }
+    },
+    {
+      "id": "joj-svet",
+      "name": "JOJ SVET",
+      "url": "http://212.102.38.45/live/test_joj_svet/playlist.m3u8",
+      "epg": {
+        "openEpg": "JOJ Svet HD.sk"
+      }
+    },
+    {
+      "id": "ct-1",
+      "name": "ČT1",
+      "url": "http://212.102.38.45/live/test_ct1_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "ČT1 HD.cz"
+      }
+    },
+    {
+      "id": "ct-2",
+      "name": "ČT2",
+      "url": "http://212.102.38.45/live/test_ct2_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "ČT2 HD.cz"
+      }
+    },
+    {
+      "id": "ct-24",
+      "name": "ČT24",
+      "url": "http://212.102.38.45/live/ct24_avc_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "ČT 24 HD.cz"
+      }
+    },
+    {
+      "id": "ct-sport",
+      "name": "ČT SPORT",
+      "url": "http://212.102.38.45/live/test_ct_sport_hevc_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "ČT Sport HD.cz"
+      }
+    },
+    {
+      "id": "ct-art",
+      "name": "ČT ART",
+      "url": "http://212.102.38.45/live/test_ct_art_hevc_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "ČT :D / ČT art HD.cz"
+      }
+    },
+    {
+      "id": "nova",
+      "name": "NOVA",
+      "url": "http://212.102.38.45/live/tv_nova_atk_1200/playlist.m3u8",
+      "epg": {
+        "openEpg": "Nova HD.cz"
+      }
+    },
+    {
+      "id": "nova-cinema",
+      "name": "NOVA CINEMA",
+      "url": "http://212.102.38.45/live/nova_cinema_avc_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "Nova CINEMA HD.cz"
+      }
+    },
+    {
+      "id": "hbo",
+      "name": "HBO",
+      "url": "http://212.102.38.45/live/test_hbo_hd_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "HBO HD.sk"
+      }
+    },
+    {
+      "id": "hbo-2",
+      "name": "HBO 2",
+      "url": "http://212.102.38.45/live/test_hbo2_hd_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "HBO 2 HD.sk"
+      }
+    },
+    {
+      "id": "hbo-3",
+      "name": "HBO 3",
+      "url": "http://212.102.38.45/live/test_hbo3_hd_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "HBO 3 HD.sk"
+      }
+    },
+    {
+      "id": "cinemax",
+      "name": "CINEMAX",
+      "url": "http://212.102.38.45/live/test_cinemax_hd_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "Cinemax HD.sk"
+      }
+    },
+    {
+      "id": "cinemax-2",
+      "name": "CINEMAX 2",
+      "url": "http://212.102.38.45/live/test_cinemax2_hd_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "Cinemax 2 HD.sk"
+      }
+    },
+    {
+      "id": "warner-tv",
+      "name": "WARNER TV",
+      "url": "http://212.102.38.45/live/warner_tv/index.m3u8",
+      "epg": {
+        "openEpg": "Warner TV.cz"
+      }
+    },
+    {
+      "id": "amc",
+      "name": "AMC",
+      "url": "http://212.102.38.45/live/test_amc_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "AMC HD.sk"
+      }
+    },
+    {
+      "id": "axn",
+      "name": "AXN",
+      "url": "http://212.102.38.45/live/test_axn/playlist.m3u8",
+      "epg": {
+        "openEpg": "AXN.cz"
+      }
+    },
+    {
+      "id": "axn-black",
+      "name": "AXN BLACK",
+      "url": "http://212.102.38.45/live/test_black/playlist.m3u8",
+      "epg": {
+        "openEpg": "AXN Black.sk"
+      }
+    },
+    {
+      "id": "axn-white",
+      "name": "AXN WHITE",
+      "url": "http://212.102.38.45/live/test_white/playlist.m3u8",
+      "epg": {
+        "openEpg": "AXN White.sk"
+      }
+    },
+    {
+      "id": "prima",
+      "name": "PRIMA",
+      "url": "http://212.102.38.45/live/prima_avc_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "Prima HD.cz"
+      }
+    },
+    {
+      "id": "cnn-prima-news",
+      "name": "CNN PRIMA NEWS",
+      "url": "http://212.102.38.45/live/test_cnn_pirma_news/playlist.m3u8",
+      "epg": {
+        "openEpg": "CNN Prima News.cz"
+      }
+    },
+    {
+      "id": "prima-cool",
+      "name": "PRIMA COOL",
+      "url": "http://212.102.38.45/live/prima_cool_cz_hevc/index.m3u8",
+      "epg": {
+        "openEpg": "Prima Cool HD.cz"
+      }
+    },
+    {
+      "id": "prima-zoom",
+      "name": "PRIMA ZOOM",
+      "url": "http://212.102.38.45/live/test_prima_zoom_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "Prima Zoom HD.cz"
+      }
+    },
+    {
+      "id": "prima-max",
+      "name": "PRIMA MAX",
+      "url": "http://212.102.38.45/live/test_prima_max_hd_hevc50/playlist.m3u8",
+      "epg": {
+        "openEpg": "Prima MAX HD.cz"
+      }
+    },
+    {
+      "id": "prima-krimi",
+      "name": "PRIMA KRIMI",
+      "url": "http://212.102.38.45/live/test_prima_krimi_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "Prima Krimi HD.cz"
+      }
+    },
+    {
+      "id": "prima-star",
+      "name": "PRIMA STAR",
+      "url": "http://212.102.38.45/live/prima_star_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "Prima Star.cz"
+      }
+    },
+    {
+      "id": "cs-film",
+      "name": "CS FILM",
+      "url": "http://212.102.38.45/live/test_cs_film_avc_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "CS Film CS Horror HD.sk"
+      }
+    },
+    {
+      "id": "cs-history",
+      "name": "CS HISTORY",
+      "url": "http://212.102.38.45/live/test_cs_history_avc_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "CS History HD.sk"
+      }
+    },
+    {
+      "id": "cs-mystery",
+      "name": "CS MYSTERY",
+      "url": "http://212.102.38.45/live/test_cs_mystery_avc_25p/playlist.m3u8",
+      "epg": {
+        "openEpg": "CS Mystery HD.sk"
+      }
+    },
+    {
+      "id": "waterbear",
+      "name": "WATERBEAR",
+      "url": "https://waterbear-waterbear-rakuten.amagi.tv/playlist.m3u8"
+    },
+    {
+      "id": "love-nature",
+      "name": "LOVE NATURE",
+      "url": "https://aegis-cloudfront-1.tubi.video/6d6d0f24-8445-4b4c-bdf6-44f9e38beaa4/playlist.m3u8",
+      "epg": {
+        "openEpg": "Love Nature HD.sk",
+        "skylink": "87a9a0429e3edc255adbb8601cfddc0a"
+      }
+    },
+    {
+      "id": "animal-planet",
+      "name": "ANIMAL PLANET",
+      "url": "http://212.102.38.45/live/test_animal_planet_hd_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "Animal Planet HD.sk"
+      }
+    },
+    {
+      "id": "discovery-channel",
+      "name": "DISCOVERY CHANNEL",
+      "url": "http://212.102.38.45/live/test_discovery_hd_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "Discovery Channel HD.sk"
+      }
+    },
+    {
+      "id": "discovery-science",
+      "name": "DISCOVERY SCIENCE",
+      "url": "http://212.102.38.45/live/test_discovery_science_hd_hevc/playlist.m3u8"
+    },
+    {
+      "id": "history",
+      "name": "HISTORY",
+      "url": "http://212.102.38.45/live/test_history/playlist.m3u8",
+      "epg": {
+        "openEpg": "History HD.sk"
+      }
+    },
+    {
+      "id": "national-geographic",
+      "name": "NATIONAL GEOGRAPHIC",
+      "url": "http://212.102.38.45/live/test_ngc/playlist.m3u8",
+      "epg": {
+        "openEpg": "National Geographic HD.sk"
+      }
+    },
+    {
+      "id": "nat-geo-wild",
+      "name": "NAT GEO WILD",
+      "url": "http://212.102.38.45/live/test_ngw/playlist.m3u8",
+      "epg": {
+        "openEpg": "National Geographic Wild.sk"
+      }
+    },
+    {
+      "id": "spektrum",
+      "name": "SPEKTRUM",
+      "url": "http://212.102.38.45/live/test_spektrum/playlist.m3u8",
+      "epg": {
+        "openEpg": "Spektrum HD.sk"
+      }
+    },
+    {
+      "id": "travel-channel",
+      "name": "TRAVEL CHANNEL",
+      "url": "http://212.102.38.45/live/test_travel_channel_hd_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "Travel Channel HD.sk"
+      }
+    },
+    {
+      "id": "eurosport-1",
+      "name": "EUROSPORT 1",
+      "url": "http://212.102.38.45/live/eurosport_1_1200_atk/playlist.m3u8",
+      "epg": {
+        "openEpg": "Eurosport 1 HD.sk"
+      }
+    },
+    {
+      "id": "eurosport-2",
+      "name": "EUROSPORT 2",
+      "url": "http://212.102.38.45/live/eurosport_2_1200_atk/playlist.m3u8",
+      "epg": {
+        "openEpg": "Eurosport 2 HD.sk"
+      }
+    },
+    {
+      "id": "gusto-tv",
+      "name": "GUSTO TV",
+      "url": "https://563f72af.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWV1X0d1c3RvVFZfSExT/playlist.m3u8"
+    },
+    {
+      "id": "tastemade",
+      "name": "TASTEMADE",
+      "url": "https://tastemade-tdint-rakuten.amagi.tv/playlist.m3u8"
+    },
+    {
+      "id": "nhk-world-japan",
+      "name": "NHK WORLD-JAPAN",
+      "url": "https://media-tyo.hls.nhkworld.jp/hls/w/live/master.m3u8",
+      "epg": {
+        "openEpg": "NHKワールド JAPAN.jp"
+      }
+    },
+    {
+      "id": "paprika-tv",
+      "name": "PAPRIKA TV",
+      "url": "http://88.212.15.19/live/test_parpika_tv_sd_hevc/playlist.m3u8",
+      "epg": {
+        "openEpg": "TV Paprika HD.sk"
+      }
+    }
+  ]
+}
